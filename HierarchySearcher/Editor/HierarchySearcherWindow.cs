@@ -323,6 +323,8 @@ public class HierarchySearcherWindow : EditorWindow
     private void OptionComponentContent(int idx)
     {
         BeginOptionContent();
+        EditorGUI.BeginChangeCheck();
+
         searchOptions[idx].obj = EditorGUILayout.TextField("Component Name", searchOptions[idx].obj as string);
 
         EndOptionContent(idx);

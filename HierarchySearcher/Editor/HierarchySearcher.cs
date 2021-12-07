@@ -14,11 +14,12 @@ public class HierarchySearcher : MonoBehaviour
     public static void HierarchySearcher_Show()
     {
         window = EditorWindow.GetWindow<HierarchySearcherWindow>();
-        Rect WindowRect = HierarchySearcher.window.position;
+        window.titleContent = new GUIContent("Hierarchy Searcher");
+        Rect WindowRect = window.position;
         WindowRect.width = width;
         WindowRect.height = height;
-        HierarchySearcher.window.position = WindowRect;
-        HierarchySearcher.window.minSize = new Vector2(width, height);
-        HierarchySearcher.window.maxSize = new Vector2(width, height);
+        window.position = WindowRect;
+        window.minSize = new Vector2(width, height);
+        window.maxSize = new Vector2(width, height);
     }
 }
