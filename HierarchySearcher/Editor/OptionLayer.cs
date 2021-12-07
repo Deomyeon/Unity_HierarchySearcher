@@ -12,7 +12,7 @@ public class OptionLayer : ISearchOption
             int value = (obj as int?).Value;
             if (first)
             {
-                Object[] objects = GameObject.FindObjectsOfType(typeof(GameObject));
+                Object[] objects = GameObject.FindObjectsOfType(typeof(GameObject), true);
                 foreach (GameObject item in objects)
                 {
                     if (item.layer == value)

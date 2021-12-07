@@ -11,7 +11,7 @@ public class OptionName : ISearchOption
         {
             if (first)
             {
-                Object[] objects = GameObject.FindObjectsOfType(typeof(GameObject));
+                Object[] objects = GameObject.FindObjectsOfType(typeof(GameObject), true);
                 foreach (Object item in objects)
                 {
                     if (item.name.ToLower().Contains((obj as string).ToLower()))

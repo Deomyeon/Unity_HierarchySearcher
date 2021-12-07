@@ -12,7 +12,7 @@ public class OptionHasParent : ISearchOption
         {
             if (first)
             {
-                Object[] objects = GameObject.FindObjectsOfType(typeof(GameObject));
+                Object[] objects = GameObject.FindObjectsOfType(typeof(GameObject), true);
                 foreach (GameObject item in objects)
                 {
                     if ((item.transform.parent != null) == (obj as bool?).Value)
