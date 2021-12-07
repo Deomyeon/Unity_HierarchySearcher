@@ -1,11 +1,13 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 public class HierarchySearcherWindow : EditorWindow
 {
 
-    private List<ISearchOption> searchOptions = new List<ISearchOption>();
+    public static List<SearchOption> searchOptions = new List<SearchOption>();
     private List<Object> objects = new List<Object>();
 
     private List<GameObject> gameObjects = new List<GameObject>();
@@ -21,17 +23,23 @@ public class HierarchySearcherWindow : EditorWindow
     Vector2 scrollViewPosition = Vector2.zero;
     Vector2 optionScrollViewPosition = Vector2.zero;
     Vector2 gameObjectScrollViewPosition = Vector2.zero;
-    
+
+
     private void OnGUI()
     {
         if (HierarchySearcher.window == null) HierarchySearcher.window = EditorWindow.GetWindow<HierarchySearcherWindow>();
 
-        for (int i = 0; i < gameObjects.Count; i++)
+        if (HierarchySearcherObjectSearchWindow.window != null)
         {
-            if (gameObjects[i] == null)
+            if (EditorWindow.focusedWindow != HierarchySearcherObjectSearchWindow.window)
             {
-                gameObjects.RemoveAt(i--);
+                HierarchySearcherObjectSearchWindow.window.Close();
             }
+        }
+
+        if (Event.current.keyCode == KeyCode.Return)
+        {
+            EditorWindow.GetWindow(typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow")).Focus();
         }
 
         EditorGUILayout.Space(10);
@@ -175,6 +183,7 @@ public class HierarchySearcherWindow : EditorWindow
 
         for (int i = 0; i < gameObjects.Count; i++)
         {
+            if (gameObjects[i] == null) continue;
             if (selectedGameObjects[i])
             {
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(370));
@@ -245,6 +254,7 @@ public class HierarchySearcherWindow : EditorWindow
                         }
                     }
                     Selection.objects = selectObject.ToArray();
+                    
                 }
             }
 
@@ -290,7 +300,46 @@ public class HierarchySearcherWindow : EditorWindow
     private void OptionMemberVariableContent(int idx)
     {
         BeginOptionContent();
-        searchOptions[idx].obj = EditorGUILayout.TextField("Member Variable Name", searchOptions[idx].obj as string);
+        EditorGUI.BeginChangeCheck();
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Member Variable Name", GUILayout.Width(200));
+        if (searchOptions[idx].obj == null)
+        {
+            searchOptions[idx].obj = "None";
+        }
+        bool pressed = GUILayout.Button(searchOptions[idx].obj as string, EditorStyles.numberField, GUILayout.Width(150));
+
+        EditorGUILayout.EndHorizontal();
+        
+        if (EditorGUI.EndChangeCheck())
+        {
+            if (pressed)
+            {
+                HashSet<string> items = new HashSet<string>();
+                Object[] objects = GameObject.FindObjectsOfType(typeof(GameObject), true);
+                foreach (GameObject item in objects)
+                {
+                    Component[] components = item.GetComponents<Component>();
+                    foreach (Component component in components)
+                    {
+                        foreach (var member in component.GetType().GetMembers())
+                        {
+                            if (member.MemberType.ToString() == "Property")
+                            {
+                                if (!items.Contains(member.Name))
+                                {
+                                    items.Add(string.Concat(component.GetType().Name, ".", member.Name));
+                                }
+                            }
+                        }
+                    }
+                }
+                string[] selectItems = items.ToArray();
+                System.Array.Sort(selectItems);
+                HierarchySearcherObjectSearchWindow.OpenWindow(selectItems, idx);
+            }
+        }
 
         EndOptionContent(idx);
     }
@@ -298,7 +347,48 @@ public class HierarchySearcherWindow : EditorWindow
     private void OptionFunctionContent(int idx)
     {
         BeginOptionContent();
-        searchOptions[idx].obj = EditorGUILayout.TextField("Function Name", searchOptions[idx].obj as string);
+        EditorGUI.BeginChangeCheck();
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Function Name", GUILayout.Width(200));
+        if (searchOptions[idx].obj == null)
+        {
+            searchOptions[idx].obj = "None";
+        }
+        bool pressed = GUILayout.Button(searchOptions[idx].obj as string, EditorStyles.numberField, GUILayout.Width(150));
+
+        EditorGUILayout.EndHorizontal();
+        
+        if (EditorGUI.EndChangeCheck())
+        {
+            if (pressed)
+            {
+                HashSet<string> items = new HashSet<string>();
+                Object[] objects = GameObject.FindObjectsOfType(typeof(GameObject), true);
+                foreach (GameObject item in objects)
+                {
+                    Component[] components = item.GetComponents<Component>();
+                    foreach (Component component in components)
+                    {
+                        foreach (var member in component.GetType().GetMembers())
+                        {
+                            if (member.MemberType.ToString() == "Method")
+                            {
+                                string checkMethod = member.Name.Substring(0, 4);
+                                if (checkMethod == "set_" || checkMethod == "get_") continue;
+                                if (!items.Contains(member.Name))
+                                {
+                                    items.Add(string.Concat(component.GetType().Name, ".", member.Name));
+                                }
+                            }
+                        }
+                    }
+                }
+                string[] selectItems = items.ToArray();
+                System.Array.Sort(selectItems);
+                HierarchySearcherObjectSearchWindow.OpenWindow(selectItems, idx);
+            }
+        }
 
         EndOptionContent(idx);
     }
@@ -325,7 +415,38 @@ public class HierarchySearcherWindow : EditorWindow
         BeginOptionContent();
         EditorGUI.BeginChangeCheck();
 
-        searchOptions[idx].obj = EditorGUILayout.TextField("Component Name", searchOptions[idx].obj as string);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Component Name", GUILayout.Width(200));
+        if (searchOptions[idx].obj == null)
+        {
+            searchOptions[idx].obj = "None";
+        }
+        bool pressed = GUILayout.Button(searchOptions[idx].obj as string, EditorStyles.numberField, GUILayout.Width(150));
+
+        EditorGUILayout.EndHorizontal();
+        
+        if (EditorGUI.EndChangeCheck())
+        {
+            if (pressed)
+            {
+                HashSet<string> items = new HashSet<string>();
+                Object[] objects = GameObject.FindObjectsOfType(typeof(GameObject), true);
+                foreach (GameObject item in objects)
+                {
+                    Component[] components = item.GetComponents<Component>();
+                    foreach (Component component in components)
+                    {
+                        if (!items.Contains(component.GetType().Name))
+                        {
+                            items.Add(component.GetType().Name);
+                        }
+                    }
+                }
+                string[] selectItems = items.ToArray();
+                System.Array.Sort(selectItems);
+                HierarchySearcherObjectSearchWindow.OpenWindow(selectItems, idx);
+            }
+        }
 
         EndOptionContent(idx);
     }
@@ -340,8 +461,8 @@ public class HierarchySearcherWindow : EditorWindow
 
     private void BeginOptionContent()
     {
-        EditorGUILayout.BeginVertical(GUI.skin.window, GUILayout.Width(390), GUILayout.Height(50));
-        EditorGUILayout.BeginVertical(GUILayout.Width(360), GUILayout.Height(20));
+        EditorGUILayout.BeginVertical(GUI.skin.window, GUILayout.Width(HierarchySearcher.window.position.width - HierarchySearcher.window.position.width / 10), GUILayout.Height(50));
+        EditorGUILayout.BeginVertical(GUILayout.Width(HierarchySearcher.window.position.width - HierarchySearcher.window.position.width / 10 - 20), GUILayout.Height(20));
 
     }
 
@@ -351,7 +472,7 @@ public class HierarchySearcherWindow : EditorWindow
 
         EditorGUI.BeginChangeCheck();
         EditorGUILayout.Space(10);
-        bool removeOption = GUILayout.Button("Remove Option", GUILayout.Width(390), GUILayout.Height(20));
+        bool removeOption = GUILayout.Button("Remove Option", GUILayout.Width(HierarchySearcher.window.position.width - HierarchySearcher.window.position.width / 10), GUILayout.Height(20));
         
         if (EditorGUI.EndChangeCheck())
         {

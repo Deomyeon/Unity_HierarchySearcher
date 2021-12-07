@@ -1,11 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class OptionComponent : ISearchOption
+public class OptionComponent : SearchOption
 {
-    public object obj   {get;set;}
 
-    public List<GameObject> SearchGameObject(List<GameObject> gameObjects, bool first)
+    public override List<GameObject> SearchGameObject(List<GameObject> gameObjects, bool first)
     {
         if (obj != null)
         {

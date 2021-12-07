@@ -16,10 +16,12 @@ public class HierarchySearcher : MonoBehaviour
         window = EditorWindow.GetWindow<HierarchySearcherWindow>();
         window.titleContent = new GUIContent("Hierarchy Searcher");
         Rect WindowRect = window.position;
+        WindowRect.x = Screen.width;
         WindowRect.width = width;
         WindowRect.height = height;
         window.position = WindowRect;
         window.minSize = new Vector2(width, height);
         window.maxSize = new Vector2(width, height);
     }
+
 }

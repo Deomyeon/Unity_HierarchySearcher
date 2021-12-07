@@ -2,11 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class OptionHasParent : ISearchOption
+public class OptionHasParent : SearchOption
 {
-    public object obj   {get;set;}
 
-    public List<GameObject> SearchGameObject(List<GameObject> gameObjects, bool first)
+    public override List<GameObject> SearchGameObject(List<GameObject> gameObjects, bool first)
     {
         if (obj != null)
         {

@@ -2,11 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class OptionFunction : ISearchOption
+public class OptionFunction : SearchOption
 {
-    public object obj   {get;set;}
 
-    public List<GameObject> SearchGameObject(List<GameObject> gameObjects, bool first)
+    public override List<GameObject> SearchGameObject(List<GameObject> gameObjects, bool first)
     {
         if (obj != null)
         {
@@ -19,12 +18,9 @@ public class OptionFunction : ISearchOption
                     Component[] components = item.GetComponents<Component>();
                     foreach (Component component in components)
                     {
-                        foreach (var member in component.GetType().GetMembers())
+                        if (component.GetType().Name == (obj as string).Split('.')[0])
                         {
-                            if (member.Name == (obj as string) && member.MemberType.ToString() == "Method")
-                            {
-                                contains = true;
-                            }
+                            contains = true;
                         }
                     }
                     if (contains)
@@ -42,12 +38,9 @@ public class OptionFunction : ISearchOption
                     Component[] components = item.GetComponents<Component>();
                     foreach (Component component in components)
                     {
-                        foreach (var member in component.GetType().GetMembers())
+                        if (component.GetType().Name == (obj as string).Split('.')[0])
                         {
-                            if (member.Name == (obj as string) && member.MemberType.ToString() == "Method")
-                            {
-                                contains = true;
-                            }
+                            contains = true;
                         }
                     }
                     if (!contains)
