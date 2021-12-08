@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class OptionMemberVariable : SearchOption
+public class OptionProperty : SearchOption
 {
 
     public override List<GameObject> SearchGameObject(List<GameObject> gameObjects, bool first)

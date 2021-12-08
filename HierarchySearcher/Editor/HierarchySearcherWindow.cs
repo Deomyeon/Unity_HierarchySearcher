@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
+using System.Reflection;
 
 public class HierarchySearcherWindow : EditorWindow
 {
@@ -14,7 +14,7 @@ public class HierarchySearcherWindow : EditorWindow
 
     private List<bool> selectedGameObjects = new List<bool>();
 
-    private string[] hierarchySearchOption = {"Option Name", "Option Component", "Option Tag", "Option Layer", "Option Function", "Option Member Variable", "Option Active", "Option Has Children", "Option Has Parent" };
+    private string[] hierarchySearchOption = {"Option Name", "Option Component", "Option Tag", "Option Layer", "Option Function", "Option Field", "Option Property", "Option Active", "Option Has Children", "Option Has Parent" };
 
     private int selectedIndex = 0;
 
@@ -36,8 +36,13 @@ public class HierarchySearcherWindow : EditorWindow
                 HierarchySearcherObjectSearchWindow.window.Close();
             }
         }
+        if (HierarchySearcher.window.position.width - HierarchySearcher.width > 0.01f)
+        {
+            Close();
+            HierarchySearcher.HierarchySearcher_Show();
+        }
 
-        if (Event.current.keyCode == KeyCode.Return)
+        if (Event.current.keyCode == KeyCode.Tab)
         {
             EditorWindow.GetWindow(typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow")).Focus();
         }
@@ -84,8 +89,11 @@ public class HierarchySearcherWindow : EditorWindow
                     case "Option Function":
                     searchOptions.Add(new OptionFunction());
                     break;
-                    case "Option Member Variable":
-                    searchOptions.Add(new OptionMemberVariable());
+                    case "Option Field":
+                    searchOptions.Add(new OptionField());
+                    break;
+                    case "Option Property":
+                    searchOptions.Add(new OptionProperty());
                     break;
                     case "Option Active":
                     searchOptions.Add(new OptionActive());
@@ -123,8 +131,11 @@ public class HierarchySearcherWindow : EditorWindow
                 case "OptionFunction":
                 OptionFunctionContent(i);
                 break;
-                case "OptionMemberVariable":
-                OptionMemberVariableContent(i);
+                case "OptionField":
+                OptionFieldContent(i);
+                break;
+                case "OptionProperty":
+                OptionPropertyContent(i);
                 break;
                 case "OptionActive":
                 OptionActiveContent(i);
@@ -202,7 +213,7 @@ public class HierarchySearcherWindow : EditorWindow
                 {
                     if (Event.current.control)
                     {
-                        selectedGameObjects[i] = true;
+                        selectedGameObjects[i] = !selectedGameObjects[i];
                         selectedGameObject = i;
                     }
                     else if (Event.current.shift)
@@ -297,13 +308,13 @@ public class HierarchySearcherWindow : EditorWindow
         EndOptionContent(idx);
     }
 
-    private void OptionMemberVariableContent(int idx)
+    private void OptionPropertyContent(int idx)
     {
         BeginOptionContent();
         EditorGUI.BeginChangeCheck();
 
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Member Variable Name", GUILayout.Width(200));
+        EditorGUILayout.LabelField("Property Name", GUILayout.Width(200));
         if (searchOptions[idx].obj == null)
         {
             searchOptions[idx].obj = "None";
@@ -323,14 +334,55 @@ public class HierarchySearcherWindow : EditorWindow
                     Component[] components = item.GetComponents<Component>();
                     foreach (Component component in components)
                     {
-                        foreach (var member in component.GetType().GetMembers())
+                        foreach (var member in component.GetType().GetProperties(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance))
                         {
-                            if (member.MemberType.ToString() == "Property")
+                            if (!items.Contains(member.Name))
                             {
-                                if (!items.Contains(member.Name))
-                                {
-                                    items.Add(string.Concat(component.GetType().Name, ".", member.Name));
-                                }
+                                items.Add(string.Concat(component.GetType().Name, ".", member.Name));
+                            }
+                        }
+                    }
+                }
+                string[] selectItems = items.ToArray();
+                System.Array.Sort(selectItems);
+                HierarchySearcherObjectSearchWindow.OpenWindow(selectItems, idx);
+            }
+        }
+
+        EndOptionContent(idx);
+    }
+
+    private void OptionFieldContent(int idx)
+    {
+        BeginOptionContent();
+        EditorGUI.BeginChangeCheck();
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Field Name", GUILayout.Width(200));
+        if (searchOptions[idx].obj == null)
+        {
+            searchOptions[idx].obj = "None";
+        }
+        bool pressed = GUILayout.Button(searchOptions[idx].obj as string, EditorStyles.numberField, GUILayout.Width(150));
+
+        EditorGUILayout.EndHorizontal();
+        
+        if (EditorGUI.EndChangeCheck())
+        {
+            if (pressed)
+            {
+                HashSet<string> items = new HashSet<string>();
+                Object[] objects = GameObject.FindObjectsOfType(typeof(GameObject), true);
+                foreach (GameObject item in objects)
+                {
+                    Component[] components = item.GetComponents<Component>();
+                    foreach (Component component in components)
+                    {
+                        foreach (var member in component.GetType().GetFields(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance))
+                        {
+                            if (!items.Contains(member.Name))
+                            {
+                                items.Add(string.Concat(component.GetType().Name, ".", member.Name));
                             }
                         }
                     }
@@ -370,16 +422,13 @@ public class HierarchySearcherWindow : EditorWindow
                     Component[] components = item.GetComponents<Component>();
                     foreach (Component component in components)
                     {
-                        foreach (var member in component.GetType().GetMembers())
+                        foreach (var member in component.GetType().GetMethods(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance))
                         {
-                            if (member.MemberType.ToString() == "Method")
+                            string checkMethod = member.Name.Substring(0, 4);
+                            if (checkMethod == "set_" || checkMethod == "get_") continue;
+                            if (!items.Contains(member.Name))
                             {
-                                string checkMethod = member.Name.Substring(0, 4);
-                                if (checkMethod == "set_" || checkMethod == "get_") continue;
-                                if (!items.Contains(member.Name))
-                                {
-                                    items.Add(string.Concat(component.GetType().Name, ".", member.Name));
-                                }
+                                items.Add(string.Concat(component.GetType().Name, ".", member.Name));
                             }
                         }
                     }

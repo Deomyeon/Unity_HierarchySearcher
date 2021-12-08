@@ -20,7 +20,7 @@ public class HierarchySearcher : MonoBehaviour
         WindowRect.width = width;
         WindowRect.height = height;
         window.position = WindowRect;
-        window.minSize = new Vector2(width, height);
+        window.minSize = new Vector2(width, height / 10);
         window.maxSize = new Vector2(width, height);
     }
 
